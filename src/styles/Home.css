@@ -28,7 +28,7 @@
 
 /* === BANNIÈRE IMAGE === */
 .header-banner {
-  background-image: url('C:\Users\khaml\Desktop\application pfe\bh-front\src\assets\acceuill.jpg'); /* Ton image d’accueil */
+  background-image: url('../assets/acceuill.jpg'); /* Ton image d’accueil */
   height: 80vh; /* La moitié de la hauteur de la fenêtre */
   width: 100%;
   background-size: cover;

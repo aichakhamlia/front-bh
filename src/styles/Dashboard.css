@@ -12,7 +12,7 @@
   overflow-y: auto;
   background: 
     linear-gradient(rgba(249, 250, 251, 0.9), rgba(249, 250, 251, 0.9)),
-    url('C:\Users\khaml\Desktop\application pfe\bh-front\src\assets\dash bord.jpeg') center/cover no-repeat;
+    url('../assets/dash\ bord.jpeg') center/cover no-repeat;
 }
 
 /* Titre principal */

@@ -1,13 +1,29 @@
- import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import "../styles/Home.css"; 
 
-
 import FloatingIcons from "../components/FloatingIcons"; 
+import { getCurrentUser } from "../services/authService";
+import Swal from 'sweetalert2';
+
 function Home() {
   const navigate = useNavigate();
   const [showAgencies, setShowAgencies] = useState(false);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    
+    // Vérifier si c'est un chef d'agence sans agenceCode
+    if (user && user.role === 'chef_agence' && !user.agenceCode) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Attention',
+        text: 'Vous êtes chef d\'agence mais aucune agence ne vous a été assignée. Veuillez contacter l\'administrateur.',
+        confirmButtonColor: '#3085d6'
+      });
+    }
+  }, []);
 
   const agencies = [
     "Agence Tunis Centre", "Agence Tunis Sud", "Agence Bizerte THAALBI",

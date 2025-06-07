@@ -8,6 +8,7 @@ import Sidebar from "../components/Sidebar";
 import { getCurrentUser } from "../services/authService";
 import { imprimerDepots } from "../services/imprimerService";
 import { FaPrint } from "react-icons/fa"; // Pour l'icône d'impression
+import Swal from 'sweetalert2';
 
 
 function Depot() {
@@ -33,10 +34,20 @@ function Depot() {
 
   useEffect(() => {
     const user = getCurrentUser();
-    console.log("user", user);
     setCurrentUser(user);
-    console.log("user after setCurrentUser", user);
-    if (user && user.role == 'chef_agence') {
+
+    // Vérifier si c'est un chef d'agence sans agenceCode
+    if (user && user.role === 'chef_agence' && !user.agenceCode) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Attention',
+        text: 'Vous êtes chef d\'agence mais aucune agence ne vous a été assignée. Veuillez contacter l\'administrateur.',
+        confirmButtonColor: '#3085d6'
+      });
+      return;
+    }
+
+    if (user && user.role === 'chef_agence') {
       setNewAgence(user.agenceCode);
       setEditAgence(user.agenceCode);
     }
@@ -51,13 +62,16 @@ function Depot() {
   const fetchDepots = async () => {
     try {
       const res = await getDepots();
+      console.log("newAgence", newAgence);
+      console.log("currentUser", getCurrentUser());
       // Filtrer les dépôts en fonction du rôle de l'utilisateur
-      if (currentUser && currentUser.role === 'chef_agence') {
-        const filteredDepots = res.filter(depot => depot.agence._id === currentUser.agence);
+      if (getCurrentUser() && getCurrentUser().role === 'chef_agence') {
+        console.log("newAgence", newAgence);
+        const filteredDepots = res.filter(depot => depot.agence._id == getCurrentUser().agenceCode);
         setDepots(filteredDepots);
       } else {
         setDepots(res);
-      }
+      } 
     } catch (err) {
       console.error("Erreur lors du chargement des dépôts :", err);
     }
@@ -66,10 +80,9 @@ function Depot() {
   const fetchAgences = async () => {
     try {
       const res = await getAgences();
-      console.log("currentUser", currentUser);
       // Si l'utilisateur est chef d'agence, ne montrer que son agence
-      if (currentUser && currentUser.role === 'chef_agence') {
-        const userAgence = res.find(agence => agence._id == currentUser.agenceCode);
+      if (getCurrentUser() && getCurrentUser().role === 'chef_agence') {
+        const userAgence = res.find(agence => agence._id == getCurrentUser().agenceCode);
         setAgences(userAgence ? [userAgence] : []);
 
 

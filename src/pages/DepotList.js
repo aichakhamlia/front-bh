@@ -4,16 +4,19 @@ import { getDepots } from '../services/depotService';
 import { getAgences } from '../services/agenceService';
 import { getDevises } from '../services/deviseService';
 import { getProduits } from '../services/produitService';
+import { getCurrentUser } from '../services/authService';
 import Sidebar from '../components/Sidebar';
 import '../styles/DepotList.css';
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';
+import Swal from 'sweetalert2';
 
 const DepotList = () => {
   const [depots, setDepots] = useState([]);
   const [agences, setAgences] = useState([]);
   const [devises, setDevises] = useState([]);
   const [produits, setProduits] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [filterSens, setFilterSens] = useState('');
   const [filterAgence, setFilterAgence] = useState('');
@@ -30,14 +33,45 @@ const DepotList = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
+        const user = getCurrentUser();
+        setCurrentUser(user);
+
+        // Vérifier si c'est un chef d'agence sans agenceCode
+        if (user && user.role === 'chef_agence' && !user.agenceCode) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Attention',
+            text: 'Vous êtes chef d\'agence mais aucune agence ne vous a été assignée. Veuillez contacter l\'administrateur.',
+            confirmButtonColor: '#3085d6'
+          });
+          return;
+        }
+
         const [depotsData, agencesData, devisesData, produitsData] = await Promise.all([
           getDepots(),
           getAgences(),
           getDevises(),
           getProduits()
         ]);
-        setDepots(depotsData);
-        setAgences(agencesData);
+        console.log("user", user);
+
+        // Filtrer les dépôts si l'utilisateur est un chef d'agence
+        if (user && user.role === 'chef_agence') {
+          const filteredDepots = depotsData.filter(depot => depot.agence._id === user.agenceCode);
+          setDepots(filteredDepots);
+          setFilterAgence(user.agenceCode); // Définir l'agence par défaut
+        } else {
+          setDepots(depotsData);
+        }
+
+        // Filtrer les agences pour un chef d'agence
+        if (user && user.role === 'chef_agence') {
+          const userAgence = agencesData.find(agence => agence._id === user.agenceCode);
+          setAgences(userAgence ? [userAgence] : []);
+        } else {
+          setAgences(agencesData);
+        }
+
         setDevises(devisesData);
         setProduits(produitsData);
       } catch (err) {
@@ -157,11 +191,24 @@ const DepotList = () => {
                   </th>
                   <th>
                     Agence
-                    <select className="form-control form-control-sm mt-1" value={filterAgence} onChange={e => setFilterAgence(e.target.value)}>
-                      <option value="">Toutes</option>
-                      {agences.map(agence => (
-                        <option key={agence._id} value={agence._id}>{agence.nom}</option>
-                      ))}
+                    <select 
+                      className="form-control form-control-sm mt-1" 
+                      value={filterAgence} 
+                      onChange={e => setFilterAgence(e.target.value)}
+                      disabled={currentUser?.role === 'chef_agence'}
+                    >
+                      {currentUser?.role === 'chef_agence' ? (
+                        <option value={filterAgence}>
+                          {agences.length > 0 ? agences[0].nom : 'Mon agence'}
+                        </option>
+                      ) : (
+                        <>
+                          <option value="">Toutes</option>
+                          {agences.map(agence => (
+                            <option key={agence._id} value={agence._id}>{agence.nom}</option>
+                          ))}
+                        </>
+                      )}
                     </select>
                   </th>
                   <th>

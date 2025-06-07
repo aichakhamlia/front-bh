@@ -107,7 +107,13 @@ const Users = () => {
           fetchUsers();
           Swal.fire('Succès', 'Utilisateur créé avec succès', 'success');
         } catch (err) {
-          Swal.fire('Erreur', 'Erreur lors de la création de l\'utilisateur.', 'error');
+          if (err.code === 'ERR_NETWORK') {
+            Swal.fire('Erreur', 'Erreur de connexion au serveur', 'error');
+          } else if (err.response && err.response.data && err.response.data.message) {
+            Swal.fire('Erreur', err.response.data.message, 'error');
+          } else {
+            Swal.fire('Erreur', 'Une erreur est survenue', 'error');
+          }
         }
       }
     });
